@@ -12,8 +12,7 @@
 
 ## Model 
 
-<img width="3245" height="1688" alt="Overvieuw" src="https://github.com/user-attachments/assets/dd5bcd3c-2b5e-4805-bcaa-acd1a2538f98" />
-
+<img width="3245" height="1688" alt="Overvieuw" src="https://github.com/user-attachments/assets/7eb1e53e-6c97-4cc8-b608-8048d142dd99" />
 
 ### Initialzation 
 
