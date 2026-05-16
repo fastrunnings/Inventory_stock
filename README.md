@@ -1,5 +1,4 @@
-# Inventory_stock
-Inventory stock model with stock predictions
+# Inventory stock model with stock predictions
 
 
 ## files:
