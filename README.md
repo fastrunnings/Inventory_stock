@@ -11,18 +11,18 @@ Soon I hope to add more explanation :)
 
 
 
-Model explanation
+## Model 
 
 <img width="3245" height="1138" alt="Overvieuw" src="https://github.com/user-attachments/assets/8ac3838d-8975-44fd-9a6a-e78ea827552e" />
 
 
-Initialzation 
+### Initialzation 
 
-Each product is initialized with draws from a randomly chosen probability mass function (pmf) for the whole timeseries for selling (Sold) and Scanning (Rest; inclused broken items, expired items etc). Theft is initilazed with draws from a pmf which is influenced by the price of the product, which is randomly generated.
+  - Each product is initialized with draws from a randomly chosen probability mass function (pmf) for the whole timeseries for selling (Sold) and Scanning (Rest; inclused broken items, expired items etc). Theft is initilazed with draws from a pmf which is influenced by the price of the product, which is randomly generated.
   
-Depending on the average amount of items sold each week and the physical size of the items (generated randomly), a maximum (how many items can physically fit a shelf), minimum amount (min amount of prefered items to have in stock), and colli size (amount of items delivered per delivery) of items is calculated. 
+  - Depending on the average amount of items sold each week and the physical size of the items (generated randomly), a maximum (how many items can physically fit a shelf), minimum amount (min amount of prefered items to have in stock), and colli size (amount of items delivered per delivery) of items is calculated. 
   
-Delivery times for each item are generated randomly from a predetermined pmf.
+  - Delivery times for each item are generated randomly from a predetermined pmf.
 
 
 
