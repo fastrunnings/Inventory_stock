@@ -13,7 +13,7 @@ Soon I hope to add more explanation :)
 
 ## Model 
 
-<img width="3245" height="1138" alt="Overvieuw" src="https://github.com/user-attachments/assets/8ac3838d-8975-44fd-9a6a-e78ea827552e" />
+<img width="3245" height="1688" alt="Overvieuw" src="https://github.com/user-attachments/assets/dd5bcd3c-2b5e-4805-bcaa-acd1a2538f98" />
 
 
 ### Initialzation 
