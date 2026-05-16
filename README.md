@@ -58,6 +58,14 @@ Note that there is an important distinction between the actual stock (actual_sto
 - Save variables
 
 
+## Example Plots 
+Note in both simulations extra delivery's and missing delivery's are not active.
+
+### Baseline no predictions
+<img width="3567" height="1168" alt="no_prediction_1" src="https://github.com/user-attachments/assets/ad4011a5-574f-41d6-8e86-0ec47cef1679" />
+
+### Dirichlet prediction
+<img width="3567" height="1168" alt="dirichlet_q50_prediction_2" src="https://github.com/user-attachments/assets/38abf32a-6a2f-4fff-acb9-dc981bb91ae9" />
 
 
 
