@@ -51,7 +51,7 @@ Note that there is an important distinction between the actual stock (actual_sto
 
 - Flagdayremnants: When no more items can physically fit into the shelf anymore (Actual_stock[t]> maximum amount of items) after a delivery, a manual stock check is performed.
 
--     Flagstockcorrecties: When the privious stock (stock[t-1]) is lower then 0 the item is flagged. Then once every 7 days a manual stock check is performed on the products that have been flagged.
+- Flagstockcorrecties: When the privious stock (stock[t-1]) is lower then 0 the item is flagged. Then once every 7 days a manual stock check is performed on the products that have been flagged.
 
 - pmf prediction (currently underperforming)
 
