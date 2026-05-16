@@ -26,17 +26,16 @@ Soon I hope to add more explanation :)
 
 
 
-Main programme
+### Stock and actual stock
 
-Note that there is an important distinction between the actual stock (actual_stock) and the stock (stock) shown in the system:
-  The stock in the system does not include the effects of Theft or missing deliveries and also is subjected to accidentaly double scanning during selling of products at the payment desks.
-  Therefore three types of stock corrections are made performed troughout the simulation as to correct the stock in the system to the actual stock levels:
-    Flagzerotelling: Then once every 7 days a manual stock check is performed on the products that have no actual stock present.
-    Flagstockcorrecties: The system flags a certain product when this product has a negative stock value within the system. Then once every 7 days a manual stock check is performed on the products that have been flagged
-    Flagdayremnants: When no more items can physically fit into the shelf anymore after a delivery a manual stock check is performed.
+Note that there is an important distinction between the actual stock (actual_stock) and the stock (stock) shown in the system. The stock in the system does not include the effects of Theft or missing deliveries and also is subjected to accidentaly double scanning during selling of products at the payment desks. Therefore three types of stock corrections are made performed troughout the simulation as to correct the stock in the system to the actual stock levels:
+  - Flagzerotelling: Then once every 7 days a manual stock check is performed on the products that have no actual stock present.
+  - Flagstockcorrecties: The system flags a certain product when this product has a negative stock value within the system. Then once every 7 days a manual stock check is performed on the products that have been flagged
+  - Flagdayremnants: When no more items can physically fit into the shelf anymore after a delivery a manual stock check is performed.
 
 
-  
+
+### Main programme
 
 - First a new_stock[t] and actual_stock[t] is computed by substracting the Sold[t], Rest[t] and Theft[t] from the previous stock[t-1] and previous acutal stock[t-1]. 
 
