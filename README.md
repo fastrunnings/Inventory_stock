@@ -39,7 +39,7 @@ Note that there is an important distinction between the actual stock (actual_sto
 
 - Flagzerotelling: Actual stock[t] is manually check in case there is no stock present.
 
-- In case a delivery has arrived; a predetermined amount items present within a colli is added to the next_stock[t] (based on an average of amount of items sold). And a corrected amount (subjected to losses of products during the delivery process) of items is added to the actual_stock[t]
+- In case a delivery has arrived; a predetermined amount items present within a colli (based on an average of amount of items sold) is added to the next_stock[t]. And a corrected amount (subjected to losses of products during the delivery process) of items is added to the actual_stock[t]
 
 - Baseline: In case the previous stock[t-1] is equal or has fallen below the predetermined minimum amount threshold, a new order is placed and a delivery time is determined. Dirichlet: A new order is made just before the stock is predicted to be nearly empty (1 product left) taking into account the delivery time. (Note this part is actively being worked on!)
 
