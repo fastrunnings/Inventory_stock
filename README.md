@@ -45,7 +45,7 @@ Note that there is an important distinction between the actual stock (actual_sto
 
 - Based on how many items are sold[t] or scanned (rest[t]), a pmf is construced an a random draw is made which consitutes to how often a product is double scanned in the current timestep. The result is then substracted from the new_stock[t].
 
-- In case there is an unplanned extra delivery (subjected to losses during delivery) add these items to the actual_stock[t].
+- In case there is an unplanned extra delivery (subjected to losses during delivery), add these items to the actual_stock[t].
 
 - Flagdayremnants: When no more items can physically fit into the shelf anymore (Actual_stock[t] > maximum amount of items) after a delivery, a manual stock check is performed.
 
