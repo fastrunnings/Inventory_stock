@@ -28,7 +28,7 @@
 
 Note that there is an important distinction between the actual stock (actual_stock) and the stock (stock or next_stock) shown in the system. The stock in the system does not include the effects of Theft or missing deliveries and also is subjected to accidentaly double scanning during selling of products at the payment desks. Therefore three types of stock corrections are possibly performed troughout the simulation as to correct the stock in the system to the actual stock levels:
   - Flagzerotelling: Once every 7 days a manual stock check is performed on the products that have no actual stock present.
-  - Flagstockcorrecties: The system flags a certain product when this product has a negative stock value. Once every 7 days a manual stock check is performed on the products that have been flagged
+  - Flagstockcorrecties: The system flags a certain product when this product has a negative stock value. Once every 7 days a manual stock check is performed on the products that have been flagged.
   - Flagdayremnants: When no more items can physically fit into the shelf anymore after a delivery, a manual stock check is performed.
 
 
