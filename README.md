@@ -69,5 +69,5 @@ Note in both simulations extra delivery's and missing delivery's are not active.
 
 
 ## Work in progress
--Experation dates of products
--Promotions of products
+- Experation dates of products
+- Promotions of products
