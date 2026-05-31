@@ -8,13 +8,36 @@ Created on Thu Apr 23 10:54:40 2026
 import Functions_stock_generation as fsg # Import stock generation functions
 import pandas as pd
 import numpy as np
+from datetime import datetime, timedelta
 
 
 def Initialize_prod(T, Shelf_length):
 
-    #Generate price and size 
-    price = np.random.randint(5, 21) 
-    #size = np.random.randint(5, 21) 
+    #Generate price 
+    price = np.random.randint(5, 21)  
+
+    #Generate day of the week and Season    
+    start_date = datetime(2026, 1, 1)
+    day_of_week = np.empty(T, dtype=object)
+    season = np.empty(T, dtype=object)
+    for t in range(T):
+        current_date = start_date + timedelta(days=t)
+    
+        # Add days
+        day_of_week[t] = current_date.strftime("%A")
+        
+        #Determine Month
+        month = current_date.month
+    
+        #Select season
+        if month in [3, 4, 5]:
+            season[t] = "spring"
+        elif month in [6, 7, 8]:
+            season[t] = "summer"
+        elif month in [9, 10, 11]:
+            season[t] = "autumn"
+        else:
+            season[t] = "winter" 
     
     #Generate theft
     p_theft = fsg.theft_probabilities_from_price_size(price)     
@@ -64,22 +87,28 @@ def Initialize_prod(T, Shelf_length):
     
     
     
-    #Set maximum number of rows possible for each product
+    #Set maximum number of rows possible for each product and minimum experation date
     avg_sold_week = int(np.round(np.sum(sold)/(T/7)))
     if avg_sold_week <= 3:
         max_prod_rows = 1 # 1 row 
+        min_exp_date = 28 # 1 month
     elif avg_sold_week > 3 and avg_sold_week <= 8:
         max_prod_rows = 2 # 2 rows
+        min_exp_date = 10 # 10 days
     elif avg_sold_week > 8 and avg_sold_week <= 12:
         max_prod_rows = 3 # 3 rows
+        min_exp_date = 7 # 5 days
     else:
         max_prod_rows = 4 # 4 rows
+        min_exp_date = 7 # 7 days min
+
+    #Generate experation date
+    max_exp_date = int(min_exp_date * 5) # times 5 to try and engulf as many items as possible
+    Exp_date = np.random.randint(min_exp_date, max_exp_date)
     
-    
-    
-    prod_lenght = np.random.uniform(0.1, 0.25)
-    prod_width = np.random.uniform(0.1, 0.25)
-    prod_height = np.random.uniform(0.1, 0.25)
+    prod_lenght = np.random.uniform(0.05, 0.15)
+    prod_width = np.random.uniform(0.05, 0.15)
+    prod_height = np.random.uniform(0.05, 0.15)
     size = prod_lenght*prod_width*prod_height # size in m^3
     
     
@@ -104,11 +133,11 @@ def Initialize_prod(T, Shelf_length):
     
     
     #Determine how much collies can be delivered for each product
-    if Colli * 2 > prod_max:
+    if Colli * 2 >= prod_max:
         max_delivery = 1 # 1 collies can be delivered maximum!
-    elif Colli * 3 > prod_max:
+    elif Colli * 3 >= prod_max:
         max_delivery = 2 
-    elif Colli * 3 > prod_max:
+    elif Colli * 3 >= prod_max:
         max_delivery = 3 
     else:
         max_delivery = 4 
@@ -119,9 +148,9 @@ def Initialize_prod(T, Shelf_length):
     
     #Generate delivery time in days
     Delivery_time = np.random.choice(
-        [2, 3, 4, 5, 6, 7, 8],
+        [2, 3, 4],
         size=T,
-        p=[0.10, 0.15, 0.15, 0.20, 0.15, 0.15, 0.10 ]
+        p=[0.30, 0.40, 0.30]
     )
 
     #Determine average delivery time for stock prediction
@@ -173,6 +202,11 @@ def Initialize_prod(T, Shelf_length):
     pred_q50 = [[] for _ in range(T)]
     pred_q90 = [[] for _ in range(T)]
 
+    #Initialze array for saving stock prediction
+    stock_q10 = np.zeros(T, dtype=int)
+    stock_q50 = np.zeros(T, dtype=int)
+    stock_q90 = np.zeros(T, dtype=int)
+
 
     #initialize Variables for ordering
     days_till_order = None
@@ -180,7 +214,7 @@ def Initialize_prod(T, Shelf_length):
     time_to_order = np.nan
 
 
-
+    #Initialize parameters for stock predicton
     alpha = None
     alpha_base = None
     states = None
@@ -190,6 +224,8 @@ def Initialize_prod(T, Shelf_length):
         "price": price,
         "theft": theft,
         "sold": sold,
+        "day_of_week":day_of_week,
+        "season":season,
         "rest": rest,
         "max_prod_rows": max_prod_rows,
         "size": size,
@@ -225,6 +261,10 @@ def Initialize_prod(T, Shelf_length):
         "alpha":alpha,
         "alpha_base":alpha_base,
         "states":states,
+        "stock_q10":stock_q10,
+        "stock_q50":stock_q50,
+        "stock_q90":stock_q90,
+        "Exp_date":Exp_date,
 
         
     }
