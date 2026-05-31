@@ -68,4 +68,6 @@ Note in both simulations extra delivery's and missing delivery's are not active.
 <img width="3567" height="1168" alt="dirichlet_q50_prediction_2" src="https://github.com/user-attachments/assets/38abf32a-6a2f-4fff-acb9-dc981bb91ae9" />
 
 
-
+## Work in progress
+-Experation dates of products
+-Promotions of products
