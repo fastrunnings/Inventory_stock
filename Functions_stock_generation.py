@@ -122,3 +122,82 @@ def Colli_vault_prod(Vault_coll, max_delivery):
     probs = probs / probs.sum()
 
     return probs
+
+
+
+
+def subtract_one(data):
+    """
+    Function for updating experation dates of individual items
+    """
+    if data is None:
+        return None
+    elif isinstance(data, list):
+        return [subtract_one(item) for item in data]
+    else:
+        return data - 1
+
+
+
+def update_pools(t, pools, Initial_pool, sold, theft, rest):
+    """
+    Function for keeping track of experation dates of each item
+    Currently the items with the fastest experation date is sold first
+    """
+    # Sum actual product losses
+    loss_sum = sold + theft + rest
+    # Initialize the pool
+    if t == 1:
+        pools[0] = Initial_pool if loss_sum == 0 else Initial_pool[:-loss_sum]
+
+    else:
+        for ii, pool in enumerate(pools):
+
+            # Skip empty pools
+            if pool is not None:
+
+                # All items of that date are gone
+                if loss_sum >= len(pool):
+                    loss_sum -= len(pool)
+                    pools[ii] = None
+
+                else:
+                    pools[ii] = pool if loss_sum == 0 else pool[:-loss_sum]
+                    loss_sum = 0
+
+    return pools
+
+
+
+
+
+def has_negative(data):
+    """
+    Function to flag if a pool of items with the same 
+    expiring date has a negative value in it.
+    """
+    if data is None:
+        return False
+    elif isinstance(data, list):
+        return any(has_negative(item) for item in data)
+    else:
+        return data < 0
+
+
+def check_negative_pools(pools, counted_negative_pools):
+    """
+    Function to keep track of amount of items expiring
+    """
+    expired_list = 0 
+
+    for ii, pool in enumerate(pools):
+
+        # Skip pools of items with the same expiring date already counted in previous timestep
+        if ii in counted_negative_pools:
+            continue
+
+        if pool is not None and has_negative(pool):
+            expired_list += len(pool)
+            counted_negative_pools.add(ii)
+
+    return expired_list, counted_negative_pools
