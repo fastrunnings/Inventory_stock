@@ -2,110 +2,89 @@
 
 ## Overview
 
-This project implements a Bayesian inventory forecasting framework based on an evolving Dirichlet distribution. The method estimates future stock depletion using historical inventory observations and uncertainty-aware Monte Carlo simulation.
+This project implements a Bayesian inventory forecasting framework based on an evolving Dirichlet distribution.
 
-The approach consists of:
+The method:
 
-1. Estimating a prior demand distribution from historical stock observations.
-2. Updating the demand distribution over time using Bayesian evidence accumulation.
-3. Simulating many future demand scenarios.
-4. Constructing uncertainty bands using the 10th, 50th and 90th percentiles.
-5. Determining future ordering dates from the predicted stock trajectories.
+1. Learns a prior demand distribution from historical stock data.
+2. Updates this distribution using new observations.
+3. Simulates future demand using Monte Carlo sampling.
+4. Computes uncertainty intervals using the 10th, 50th and 90th percentiles.
+5. Determines future ordering dates based on predicted stock depletion.
 
 ---
 
 ## 1. Demand Estimation
 
-The observed stock depletion process is approximated as
+Observed stock depletion is approximated as:
 
-[
-\varepsilon_t = S_t - S_{t+1}
-]
+```text
+εₜ = Sₜ − Sₜ₊₁
+```
 
-where
+where:
 
-* (S_t) = stock level at time (t)
-* (\varepsilon_t) = observed stock reduction (demand proxy)
+* Sₜ = stock level at time t
+* εₜ = estimated demand (stock depletion)
 
-The possible demand states are defined as
+Possible demand states are:
 
-[
-\mathcal{K} = {0,1,\dots,K}
-]
+```text
+K = {0, 1, 2, ..., Kmax}
+```
 
-with
+where:
 
-[
-K = \max(\varepsilon_{1:\text{IdxPred}}) + \text{tail buffer}
-]
+```text
+Kmax = max(ε₁:IdxPred) + tail_buffer
+```
 
 ---
 
 ## 2. Initial Dirichlet Prior
 
-A prior distribution is constructed from historical observations.
+The initial evidence vector is:
 
-For each demand state (i),
+```text
+αᵢ⁽⁰⁾ = cᵢ + η · exp(−λi) / Σ exp(−λj)
+```
 
-[
-\alpha_i^{(0)}
-==============
+where:
 
-c_i
-+
-\eta
-\frac{e^{-\lambda i}}
-{\sum_{j \in \mathcal{K}} e^{-\lambda j}}
-]
+* αᵢ = evidence for state i
+* cᵢ = observed count of state i
+* η = prior strength
+* λ = exponential decay parameter
 
-where
+The complete Dirichlet parameter vector is:
 
-* (c_i) = observed count of demand state (i)
-* (\eta) = prior strength
-* (\lambda) = exponential decay parameter
-
-The vector
-
-[
-\boldsymbol{\alpha}^{(0)}
-=========================
-
-(\alpha_0,\alpha_1,\dots,\alpha_K)
-]
-
-defines the initial Dirichlet distribution.
+```text
+α = (α₀, α₁, α₂, ..., αₖ)
+```
 
 ---
 
 ## 3. Bayesian Updating
 
-Recent observations update the evidence vector according to
+As new observations arrive:
 
-[
-\alpha_i^{(t+1)}
-================
+```text
+αᵢ⁽ᵗ⁺¹⁾ = αᵢ⁽ᵗ⁾ + ωₜ · γ · I(εₜ = i)
+```
 
-\alpha_i^{(t)}
-+
-\omega_t \gamma
-\mathbf{1}(\varepsilon_t=i)
-]
+where:
 
-where
+* ωₜ = recency weight
+* γ = observation strength
+* I(·) = indicator function
 
-* (\omega_t) = recency weight
-* (\gamma) = observation strength
-* (\mathbf{1}(\cdot)) = indicator function
+The recency weights are:
 
-The recency weights are
+```text
+ωₜ = decayᵗ
+```
 
-[
-\omega_t = d^{,t}
-]
-
-where (d) is the user-defined decay factor.
-
-This gives greater importance to recent observations while retaining historical information.
+This gives more weight to recent observations.
 
 ---
 
@@ -113,219 +92,183 @@ This gives greater importance to recent observations while retaining historical 
 
 A slower baseline distribution is maintained:
 
-[
-\alpha_i^{\text{base}}(t+1)
-===========================
+```text
+α_base,ᵢ⁽ᵗ⁺¹⁾ = δ · α_base,ᵢ⁽ᵗ⁾ + γ · I(εₜ₋ₗₐg = i)
+```
 
-\delta
-\alpha_i^{\text{base}}(t)
-+
-\gamma
-\mathbf{1}
-(\varepsilon_{t-\ell}=i)
-]
+where:
 
-where
+* δ = long-term forgetting factor
+* lag = update lag
 
-* (\delta) = long-term forgetting factor
-* (\ell) = lag length
-
-This allows the model to adapt to structural demand changes.
+This captures long-term demand changes.
 
 ---
 
 ## 5. Manual Stock Checks
 
-Whenever a manual inventory correction occurs (e.g. stock count, inventory correction, daily remainder correction), uncertainty is reset:
+Whenever:
 
-[
-\boldsymbol{\alpha}^{(t)}
-=========================
+* Nulltelling
+* Voorraad correctie
+* Dag rest correctie
 
-\boldsymbol{\alpha}^{\text{base}}(t)
-]
+occurs, uncertainty is reset:
 
-This reflects the fact that the true stock level has become known again.
+```text
+α⁽ᵗ⁾ = α_base⁽ᵗ⁾
+```
+
+The stock level is then assumed to be known exactly.
 
 ---
 
 ## 6. Demand Distribution Sampling
 
-At prediction time, a demand probability vector is sampled from the Dirichlet distribution:
+Future demand probabilities are sampled from:
 
-[
-\mathbf{p}^{(m)}
-\sim
-\text{Dirichlet}
-\left(
-\boldsymbol{\alpha}^{(t)}
-\right)
-]
+```text
+p⁽ᵐ⁾ ~ Dirichlet(α)
+```
 
-where
+where:
 
-[
-\mathbf{p}^{(m)}
-================
+```text
+p⁽ᵐ⁾ = (p₀, p₁, ..., pₖ)
+```
 
-(p_0,p_1,\dots,p_K)
-]
-
-represents one possible future demand distribution.
+Each sample represents one possible future demand distribution.
 
 ---
 
 ## 7. Monte Carlo Demand Simulation
 
-Future demand is sampled from the categorical distribution:
+Future demand values are generated as:
 
-[
-d_\tau^{(m)}
-\sim
-\text{Categorical}
-\left(
-\mathbf{p}^{(m)}
-\right)
-]
+```text
+dτ⁽ᵐ⁾ ~ Categorical(p⁽ᵐ⁾)
+```
 
-for
+for:
 
-[
-\tau = 1,\dots,H
-]
+```text
+τ = 1, 2, ..., H
+```
 
-where (H) is the prediction horizon.
+where H is the prediction horizon.
 
 ---
 
 ## 8. Stock Forecasting
 
-Future stock levels are simulated as
+Future stock levels are computed as:
 
-[
-S_{t+\tau}^{(m)}
-================
+```text
+Sₜ₊τ⁽ᵐ⁾ = Sₜ − Σ dⱼ⁽ᵐ⁾
+```
 
-## S_t
+where:
 
-\sum_{j=1}^{\tau}
-d_j^{(m)}
-]
+```text
+j = 1 ... τ
+```
 
-for each Monte Carlo simulation (m).
-
-This produces a collection of possible future stock trajectories.
+This produces many possible future stock trajectories.
 
 ---
 
 ## 9. Uncertainty Quantification
 
-For each future timestep, prediction intervals are obtained from the simulated trajectories:
+For every future timestep:
 
-[
-q_{10,\tau}
-===========
+```text
+q₁₀ = 10th percentile
+q₅₀ = median prediction
+q₉₀ = 90th percentile
+```
 
-P_{10}
-\left(
-S_{t+\tau}^{(m)}
-\right)
-]
+computed from all simulated trajectories.
 
-[
-q_{50,\tau}
-===========
+These form the prediction interval:
 
-P_{50}
-\left(
-S_{t+\tau}^{(m)}
-\right)
-]
+```text
+[q₁₀ , q₉₀]
+```
 
-[
-q_{90,\tau}
-===========
+and the central forecast:
 
-P_{90}
-\left(
-S_{t+\tau}^{(m)}
-\right)
-]
-
-where
-
-* (q_{10}) = pessimistic forecast
-* (q_{50}) = median forecast
-* (q_{90}) = optimistic forecast
-
-These form the uncertainty bands shown in the forecast plots.
+```text
+q₅₀
+```
 
 ---
 
 ## 10. Ordering Decision
 
-The future ordering date is determined from the first time the selected quantile crosses the stock threshold:
+The ordering time is determined by the first future timestep where the chosen prediction path reaches zero stock:
 
-[
-\tau^*
-======
+```text
+τ* = min{τ : q_order(τ) ≤ 0}
+```
 
-\min
-\left{
-\tau :
-q_{\text{order},\tau}
-\le 0
-\right}
-]
+The order should then be placed at:
 
-The ordering time is then
+```text
+t_order = t + τ* − L − 1
+```
 
-[
-t_{\text{order}}
-================
+where:
 
-t
-+
-\tau^*
-------
+* L = average delivery lead time
 
-## L
+Possible choices are:
 
-1
-]
-
-where
-
-* (L) = average delivery lead time
-
-Using
-
-[
-q_{10}
-]
-
-results in a conservative ordering strategy, while
-
-[
-q_{50}
-]
-
-and
-
-[
-q_{90}
-]
-
-lead to progressively more optimistic decisions.
+```text
+q₁₀ → conservative strategy
+q₅₀ → median strategy
+q₉₀ → optimistic strategy
+```
 
 ---
 
 ## Key Features
 
-* Bayesian learning of demand distributions
-* Explicit uncertainty quantification
-* Automatic adaptation to changing demand patterns
-* Reset of uncertainty after manual stock verification
-* Monte Carlo inventory forecasting
-* Quantile-based inventory ordering strategy
-* Suitable for retail and warehouse inventory management
+* Bayesian demand learning
+* Dirichlet uncertainty modelling
+* Monte Carlo stock simulation
+* Dynamic adaptation to changing demand
+* Uncertainty reset after manual stock checks
+* Quantile-based inventory forecasting
+* Automatic ordering recommendations
+
+---
+
+## Workflow
+
+```text
+Historical Stock Data
+          │
+          ▼
+ Estimate εₜ = Sₜ − Sₜ₊₁
+          │
+          ▼
+ Build Initial Dirichlet Prior
+          │
+          ▼
+ Bayesian Updating
+          │
+          ▼
+ Sample Dirichlet Distributions
+          │
+          ▼
+ Monte Carlo Demand Simulation
+          │
+          ▼
+ Future Stock Paths
+          │
+          ▼
+ q10 / q50 / q90 Forecasts
+          │
+          ▼
+ Ordering Recommendation
+```
