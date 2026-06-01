@@ -53,7 +53,7 @@ Note that there is an important distinction between the actual stock (actual_sto
 
 - pmf prediction (currently underperforming)
 
-- Dirichlet prediction: Compute a prior based on the first half of the data -> Compute multiple distributions with a dirichlet after a delivery arrived -> make multiple draws from these distributions -> compute the mean (q50) and the 10th/90th percentile -> Determine optimal ordering date for future timesteps. Update the prior based on long term trends and short term trend.
+- Dirichlet prediction: See Dirichle ->README.md for more details.
 
 - Save variables
 
