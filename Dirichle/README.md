@@ -109,9 +109,9 @@ This captures long-term demand changes.
 
 Whenever:
 
-* Nulltelling
-* Voorraad correctie
-* Dag rest correctie
+* zerotelling
+* stockcorrecties
+* dayremnants
 
 occurs, uncertainty is reset:
 
