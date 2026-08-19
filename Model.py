@@ -16,10 +16,14 @@ import matplotlib.pyplot as plt
 #############################################Create data set#############################################
 
 #Set seed for random generations
-np.random.seed(19)
+np.random.seed(25)
 #Set seed for stock prediction
 rng = np.random.default_rng(42)
-            
+
+#Set seed for experation date (Needs to be done to prevent using the same random stream as the stock generation part)
+rng_exp = np.random.default_rng(12345)
+
+
 #Initialize dataframe and time periods
 all_products = []
 columns = ["Product", "time", "theft", "Price", "Size",
@@ -71,7 +75,7 @@ Flagzerotelling = True # Perform a zerotelling
 Flagstockcorrecties = True # Perform stock correctie
 Flagdayremnants = True # Perform checks in case the colli from the delivery does not fit in the shelf 
 Flagorderprediction_pmf = False # Predict when to order new products based on probability mass function 
-Flagorderprediction_dir = True # Predict when to order new products based on dirichlet mass function
+Flagorderprediction_dir = False # Predict when to order new products based on dirichlet mass function
 
 
 
@@ -125,9 +129,11 @@ for product_id in range(0, nr_products): #Loop over alll products
     stock_q50 = prod_init["stock_q50"]
     stock_q90 = prod_init["stock_q90"]
     Exp_date = prod_init["Exp_date"]
+    sale_type = prod_init["sale_type"]
+
         
     print("product_id = ",product_id)
-
+    #print("sale_type = ", sale_type)
 
 
     
@@ -150,7 +156,6 @@ for product_id in range(0, nr_products): #Loop over alll products
     expired_products = np.zeros(T, dtype=int)
 
 
-    
     
     # ====================================================================================================================                               
     #Loop over every timestep 
@@ -420,11 +425,6 @@ for product_id in range(0, nr_products): #Loop over alll products
                 stock_correctie = False
                              
 
-################################################################################################################################        
-        #Update stock shown in system 
-        stock.append(next_stock)
-        #Update the actual stock 
-        actual_stock[t] = actual_next_stock + Extra_colli_stock[t] - stock_missing[t]
 
 
 ################################################################################################################################        
@@ -432,38 +432,35 @@ for product_id in range(0, nr_products): #Loop over alll products
         # =======================================================================                                   
         #Keep track of experation dates of each item
         # =======================================================================                               
-        pools = fsg.update_pools(
+        pools, probb = fsg.update_pools( #Adjust!)
             t=t,
             pools=pools,
             Initial_pool=Initial_pool,
             sold=sold[t],
             theft=theft[t],
-            rest=rest[t]
+            rest=rest[t],
+            rng=rng_exp
         )
 
-        #Update experation date of each individual items 
+        #Update experation date of each individual items (keep the same)
         pools = fsg.subtract_one(pools)
-
-                    
-
-        #print("t =", t)
-        #print("pools = ", pools)
-        #print("actual_stock[t] = ", actual_stock[t])
-        #print("")
         
-        #Keep track of expired items 
+                
+        #Keep track of expired items (keep the same )
         expired_list, counted_negative_pools = fsg.check_negative_pools(pools, counted_negative_pools)
         expired_products[t] = expired_list 
-        #print("t =", t)
-        #print("expired_list =", expired_list)
 
-        #print("pools =", pools)
-        #print("expired_list =", expired_items)
-        #print("")
-        #print("")
-             
         
 
+################################################################################################################################        
+        #Update stock shown in system 
+        stock.append(next_stock - expired_products[t])
+        #Update the actual stock 
+        actual_stock[t] = actual_next_stock + Extra_colli_stock[t] - stock_missing[t] - expired_products[t]
+        
+        #print("sale_type =", sale_type[t])
+        #print("sold =", sold)
+        
 ################################################################################################################################                
         # ====================================================================================================================                               
         #Stock prediction pmf    
@@ -519,12 +516,7 @@ for product_id in range(0, nr_products): #Loop over alll products
             manual_check_t = (
                 zero_t[t] == 1
                 or stock_cor[t] == 1
-                or day_rest_cor[t] == 1)
-
-            # manual_check_del = (
-            #     stock_cor[t] == 1
-            #     or day_rest_cor[t] == 1)
-    
+                or day_rest_cor[t] == 1) 
     
             
             (alpha, states, alpha_base, 
@@ -575,11 +567,6 @@ for product_id in range(0, nr_products): #Loop over alll products
                     stock_q50[t] = actual_stock[t]
                     stock_q90[t] = actual_stock[t]
                     delivered_stock_sum = 0
-                    #print(stock_q10[t])
-                    #print(actual_stock[t])
-                    #print("check")
-                    #print(t)
-                    #print(pred_q10[t])
                 
                 elif manual_check_t == False:
                     for k in range(1, t + 1):
@@ -588,14 +575,9 @@ for product_id in range(0, nr_products): #Loop over alll products
                             stock_q50[t] = int(pred_q50[t - k][0][k - 1])
                             stock_q90[t] = int(pred_q90[t - k][0][k - 1])
                             
-                            #print(t)
-                            #print(stock_q10[t])
                             break
                     if delivery_amount[t] > 0:
                         delivered_stock_sum += delivered_stock
-                        # stock_q10[t] += delivered_stock_sum
-                        # stock_q50[t] += delivered_stock_sum
-                        # stock_q90[t] += delivered_stock_sum
                     
                     stock_q10[t] += delivered_stock_sum
                     stock_q50[t] += delivered_stock_sum
@@ -640,6 +622,7 @@ for product_id in range(0, nr_products): #Loop over alll products
         "stock_q50": stock_q50,
         "stock_q90": stock_q90, 
         "expired_products":expired_products,
+        "sale_type": sale_type,
     })
 
     all_products.append(df_product)
@@ -671,11 +654,14 @@ for product_id in range(0, nr_products): #Loop over alll products
     "stock_q50": [None],
     "stock_q90": [None],
     "expired_products": [None],
+    "sale_type": [None],
     })
     all_products.append(empty_row)
 
 # Combine dataset
-df_no_pred = pd.concat(all_products, ignore_index=True)
+#df_no_pred = pd.concat(all_products, ignore_index=True)
+df_dir = pd.concat(all_products, ignore_index=True)
 
 #Save data from first product 
-#one_product = df_dir[df_dir["Product"] == 0]
+#one_product = df_no_pred[df_no_pred["Product"] == 0]
+#one_product = df_dir[df_no_pred["Product"] == 0]
