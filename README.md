@@ -51,7 +51,7 @@ Note that there is an important distinction between the actual stock (actual_sto
 
 - Flagstockcorrecties: When the privious stock (stock[t-1]) is lower then 0 the item is flagged. Then once every 7 days a manual stock check is performed on the products that have been flagged.
 
-- Expiration dates for each item is checked. Depending on the amount of items present and their respective expiration date certain items have a higher probability of being sold then others (For example: a product consisting of items wich have a higher expiration dates within a large item pool; including items with small expiration dates, will have a higher chance of being sold compared to the items with small expiration dates.). Each timestep the expiration dates of all items is updated and the expired items are removed from the stock and actual_stock variables.  
+- Expiration date for each item is checked. Depending on the amount of items present and their respective expiration date certain items have a higher probability of being sold then others (For example: a product consisting of items wich have a higher expiration dates within a large item pool; including items with small expiration dates, will have a higher chance of being sold compared to the items with small expiration dates.). Each timestep the expiration dates of all items is updated and the expired items are removed from stock[t] and actual_stock[t].  
 
 - pmf prediction (currently underperforming)
 
