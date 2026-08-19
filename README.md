@@ -16,7 +16,7 @@
 
 ### Initialzation 
 
-  - Each product is initialized with draws from a randomly chosen probability mass function (pmf) for the whole timeseries for selling (Sold) and Scanning (Rest; inclused broken items, expired items etc...). Theft is initilazed with draws from a pmf which is influenced by the price of the product, which is randomly generated.
+  - Each product is initialized with draws from a randomly chosen probability mass function (pmf) for the whole timeseries for selling (Sold) and Scanning (Rest; inclused broken items, expired items etc...). Theft is initilazed with draws from a pmf which is influenced by the price of the product, which is randomly generated. All products are initialized with a predetermined expiration date which is is assigned to a product during initialization as well as after a delivery.
   
   - Depending on the average amount of items sold each week and the physical size of the items (generated randomly), a maximum (how many items can physically fit a shelf), minimum amount (minimum amount of prefered items to have in stock), and colli size (amount of items delivered per delivery) of items is calculated. 
   
@@ -51,6 +51,8 @@ Note that there is an important distinction between the actual stock (actual_sto
 
 - Flagstockcorrecties: When the privious stock (stock[t-1]) is lower then 0 the item is flagged. Then once every 7 days a manual stock check is performed on the products that have been flagged.
 
+- Expiration dates for each item is checked. Depending on the amount of items present and their respective expiration date certain items have a higher probability of being sold then others (For example: a product consisting of items wich have a higher expiration dates within a large item pool; including items with small expiration dates, will have a higher chance of being sold compared to the items with small expiration dates.). Each timestep the expiration dates of all items is updated and the expired items are removed from the stock and actual_stock variables.  
+
 - pmf prediction (currently underperforming)
 
 - Dirichlet prediction: See Dirichle ->README.md for more details.
@@ -72,5 +74,4 @@ Note in both simulations extra delivery's and missing delivery's are not active.
 
 
 ## Work in progress
-- Experation dates of products
 - Promotions of products
