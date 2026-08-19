@@ -62,10 +62,20 @@ Note that there is an important distinction between the actual stock (actual_sto
 Note in both simulations extra delivery's and missing delivery's are not active.
 
 ### Baseline no predictions
-<img width="3567" height="1168" alt="no_prediction_1" src="https://github.com/user-attachments/assets/ad4011a5-574f-41d6-8e86-0ec47cef1679" />
+#<img width="3567" height="1168" alt="no_prediction_1" src="https://github.com/user-attachments/assets/ad4011a5-574f-41d6-8e86-0ec47cef1679" />
+
+<img width="3567" height="1168" alt="no_prediction" src="https://github.com/user-attachments/assets/c6f77145-89bd-4388-9da6-00d629f72be9" />
+
+
+
 
 ### Dirichlet prediction
-<img width="3567" height="1168" alt="dirichlet_q50_prediction_2" src="https://github.com/user-attachments/assets/38abf32a-6a2f-4fff-acb9-dc981bb91ae9" />
+#<img width="3567" height="1168" alt="dirichlet_q50_prediction_2" src="https://github.com/user-attachments/assets/38abf32a-6a2f-4fff-acb9-dc981bb91ae9" />
+
+<img width="3567" height="1168" alt="dirichlet_q50_prediction" src="https://github.com/user-attachments/assets/c2a6ad17-f5e9-4d84-9294-2a5f5a125989" />
+
+### Expired products
+<img width="3545" height="1830" alt="Expration_dates" src="https://github.com/user-attachments/assets/98333054-1b3b-47d6-86c3-118ab55002c8" />
 
 
 ## Work in progress
