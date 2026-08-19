@@ -139,35 +139,47 @@ def subtract_one(data):
 
 
 
-def update_pools(t, pools, Initial_pool, sold, theft, rest):
-    """
-    Function for keeping track of experation dates of each item
-    Currently the items with the fastest experation date is sold first
-    """
-    # Sum actual product losses
+def update_pools(t, pools, Initial_pool, sold, theft, rest, rng):
+
     loss_sum = sold + theft + rest
-    # Initialize the pool
+
     if t == 1:
         pools[0] = Initial_pool if loss_sum == 0 else Initial_pool[:-loss_sum]
+        return pools, []
 
-    else:
-        for ii, pool in enumerate(pools):
+    prob_history = []
 
-            # Skip empty pools
-            if pool is not None:
+    k = 0.1
+    alpha = 0.3
 
-                # All items of that date are gone
-                if loss_sum >= len(pool):
-                    loss_sum -= len(pool)
-                    pools[ii] = None
+    for _ in range(loss_sum):
 
-                else:
-                    pools[ii] = pool if loss_sum == 0 else pool[:-loss_sum]
-                    loss_sum = 0
+        weights = []
 
-    return pools
+        for pool in pools:
 
+            if pool[0] > 0:
+                exp_weight = np.tanh(k * pool[0])
+            else:
+                exp_weight = np.tanh(k * 0.1)
 
+            size_weight = len(pool) ** alpha
+            weights.append(exp_weight * size_weight)
+
+        weights = np.asarray(weights)
+
+        probs = weights / weights.sum()
+        prob_history.append(probs.copy())
+
+        # IMPORTANT: use expiration-specific RNG
+        chosen = rng.choice(len(pools), p=probs)
+
+        pools[chosen] = pools[chosen][:-1]
+
+        if len(pools[chosen]) == 0:
+            del pools[chosen]
+
+    return pools, prob_history
 
 
 
@@ -184,20 +196,30 @@ def has_negative(data):
         return data < 0
 
 
+
 def check_negative_pools(pools, counted_negative_pools):
     """
-    Function to keep track of amount of items expiring
+    Keep track of items that have expired and remove expired/empty pools.
     """
-    expired_list = 0 
+    expired_list = 0
+    pools_to_keep = []
 
     for ii, pool in enumerate(pools):
 
-        # Skip pools of items with the same expiring date already counted in previous timestep
-        if ii in counted_negative_pools:
+        if pool is None or len(pool) == 0:
+            # Remove None and empty pools
             continue
 
-        if pool is not None and has_negative(pool):
+        if has_negative(pool):
             expired_list += len(pool)
             counted_negative_pools.add(ii)
 
+            # Don't add it -> removes the pool
+
+        else:
+            pools_to_keep.append(pool)
+
+    pools[:] = pools_to_keep
+
     return expired_list, counted_negative_pools
+
