@@ -16,10 +16,19 @@ def Initialize_prod(T, Shelf_length):
     #Generate price 
     price = np.random.randint(5, 21)  
 
-    #Generate day of the week and Season    
+
+    #Generate day of the week and Season and determine when an item is on sale   
     start_date = datetime(2026, 1, 1)
     day_of_week = np.empty(T, dtype=object)
     season = np.empty(T, dtype=object)
+    sale_type = np.zeros(T, dtype=int)  # unique per product
+
+    #initialize chance for type of sale
+    p_weekly = 0.05
+    p_monthly = 0.02
+    p_season = 0.05
+
+    #Loop to generate days of the week and season
     for t in range(T):
         current_date = start_date + timedelta(days=t)
     
@@ -38,6 +47,67 @@ def Initialize_prod(T, Shelf_length):
             season[t] = "autumn"
         else:
             season[t] = "winter" 
+
+
+    # First Wednesday of each season
+    season_start_wednesday = np.zeros(T, dtype=bool)
+    
+    seen_seasons = set()
+
+    #Check for season sale
+    for t in range(T):
+        if day_of_week[t] == "Wednesday" and season[t] not in seen_seasons:
+            season_start_wednesday[t] = True
+            seen_seasons.add(season[t])
+
+
+    #Check for all sales
+    for t in range(T):
+
+        if sale_type[t] != 0:
+            continue
+    
+        lookback_start = max(0, t - 28)
+        recently_on_sale = np.any(sale_type[lookback_start:t] != 0)
+    
+        if recently_on_sale:
+            continue
+    
+        if day_of_week[t] == "Wednesday":
+    
+            if season_start_wednesday[t]:
+                sale = np.random.choice(
+                    [0, 1, 2, 3],
+                    p=[
+                        1 - p_weekly - p_monthly - p_season,
+                        p_weekly,
+                        p_monthly,
+                        p_season
+                    ]
+                )
+            else:
+                sale = np.random.choice(
+                    [0, 1, 2],
+                    p=[
+                        1 - p_weekly - p_monthly,
+                        p_weekly,
+                        p_monthly
+                    ]
+                )
+    
+            if sale == 1:
+                duration = 7
+            elif sale == 2:
+                duration = 30
+            elif sale == 3:
+                duration = 90
+            else:
+                duration = 0
+    
+            if duration > 0 and t + duration <= T:
+                sale_type[t:t + duration] = sale
+
+
     
     #Generate theft
     p_theft = fsg.theft_probabilities_from_price_size(price)     
@@ -94,13 +164,13 @@ def Initialize_prod(T, Shelf_length):
         min_exp_date = 28 # 1 month
     elif avg_sold_week > 3 and avg_sold_week <= 8:
         max_prod_rows = 2 # 2 rows
-        min_exp_date = 10 # 10 days
+        min_exp_date = 15 # 21 days
     elif avg_sold_week > 8 and avg_sold_week <= 12:
         max_prod_rows = 3 # 3 rows
-        min_exp_date = 7 # 5 days
+        min_exp_date = 9 # 14 days
     else:
         max_prod_rows = 4 # 4 rows
-        min_exp_date = 7 # 7 days min
+        min_exp_date = 9 # 14 days min
 
     #Generate experation date
     max_exp_date = int(min_exp_date * 5) # times 5 to try and engulf as many items as possible
@@ -265,6 +335,7 @@ def Initialize_prod(T, Shelf_length):
         "stock_q50":stock_q50,
         "stock_q90":stock_q90,
         "Exp_date":Exp_date,
+        "sale_type": sale_type,
 
         
     }
