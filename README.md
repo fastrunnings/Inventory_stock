@@ -2,7 +2,7 @@
 
 
 ## files:
-  - Model_git.ipynb generates the data (Also saves the data as a csv file)
+  - Model_git.ipynb generates the data 
   - Analysis.ipynb is a example analysis file for the output of the model
   - Dirichle folder includes the inventory stock predictions based on updating a pmf and using a dirichlet distribution
   - pmf folder includes the inventory stock predictions based on pmf only (works not as good as dirichlet distribution)
