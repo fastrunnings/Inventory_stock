@@ -5,7 +5,6 @@ This model creates syntethic inventory stock data for 2 years by generating rand
   - Model_git.ipynb generates the data 
   - Analysis.ipynb is a example analysis file for the output of the model
   - Dirichle folder includes the inventory stock predictions based on updating a pmf and using a dirichlet distribution
-  - pmf folder includes the inventory stock predictions based on pmf only (works not as good as dirichlet distribution)
   - Functions_stock_generation.py & Initialize_product.py are files called in the Model_git.ipynb for stock generation
 
 
@@ -55,7 +54,6 @@ Note that there is an important distinction between the actual stock (actual_sto
 
 - Expiration date for each item is checked. Depending on the amount of items present and their respective expiration date certain items have a higher probability of being sold then others (For example: a product consisting of items wich have a higher expiration dates within a large item pool; including items with small expiration dates, will have a higher chance of being sold compared to the items with small expiration dates.). Each timestep the expiration date of each item is updated and the expired items are removed from stock[t] and actual_stock[t].  
 
-- pmf prediction (currently underperforming)
 
 - Dirichlet prediction: See Dirichle ->README.md for more details.
 
