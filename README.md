@@ -1,5 +1,5 @@
 # Inventory stock model with stock predictions
-
+This model creates syntethic inventory stock data for 2 years by generating random products with different characteristics. Within the analysis the invertory stock is analyised for two different delivery prediciton schemes, including a possible IT shutdown. Future analysis could be done on work activities, theft promotions etc...
 
 ## files:
   - Model_git.ipynb generates the data 
@@ -38,6 +38,8 @@ Note that there is an important distinction between the actual stock (actual_sto
 - First a new_stock[t] and actual_stock[t] is computed by substracting the Sold[t], Rest[t] and Theft[t] from the previous stock[t-1] and previous actual stock[t-1]. 
 
 - Flagzerotelling: Actual stock[t] is manually check in case there is no stock present.
+
+- In case of an IT shutdown the delivery for the current day and future planned deliveries are stopped.  
 
 - In case a delivery has arrived; a predetermined amount items present within a colli (based on an average of amount of items sold) is added to the next_stock[t]. And a corrected amount (subjected to losses of products during the delivery process) of items is added to the actual_stock[t]
 
