@@ -15,15 +15,6 @@ import matplotlib.pyplot as plt
 
 #############################################Create data set#############################################
 
-#Set seed for random generations
-np.random.seed(25)
-#Set seed for stock prediction
-rng = np.random.default_rng(42)
-
-#Set seed for experation date (Needs to be done to prevent using the same random stream as the stock generation part)
-rng_exp = np.random.default_rng(12345)
-
-
 #Initialize dataframe and time periods
 all_products = []
 columns = ["Product", "time", "theft", "Price", "Size",
@@ -33,7 +24,7 @@ columns = ["Product", "time", "theft", "Price", "Size",
 empty_row = pd.DataFrame([{col: "" for col in columns}]) # create empty row for readability
 T = 365*2  # total time periods 2 years!
 Shelf_length = 1 # 1 meters
-nr_products = 10 #At 100 (but take 1000 to be sure!) you should be fine with your boxplots! no need to do more. 
+nr_products = 100 #At 100 (but take 1000 to be sure!) you should be fine with your boxplots! no need to do more. 
 Idx_pred = int(np.round(T/2)) #Set Idx for stock prediction 
 
 
@@ -55,13 +46,6 @@ alpha_history = [] ##keep track of Dirichlet history
 delivered_stock_sum = 0 #Variable to keep track of deliveries for predictions 
 
 
-#Calculations for size (needed for theft later on??)
-# max_lenght, max_width, max_height = 0.25, 0.25, 0.25
-# min_lenght, min_width, min_height = 0.1, 0.1, 0.1
-# min_size = min_lenght * min_width * min_height 
-# max_size = max_lenght * max_width * max_height 
-
-
 #Flags
 
 Flag_col_del_mis = False # Missing collies
@@ -70,12 +54,15 @@ Flag_col_del_prod_mis = False #Missing products within collies (normal delivery 
 Flag_col_del_extra = False # Not registerd extra colli delivery 
 Flag_col_extra_del_prod_mis = False # Missing products within extra collies
 Flag_double_scanned = True # Products accidently scanned double or triple
+Flag_shutdown = True # add a shutdown within the timeseries 
+
+
 
 Flagzerotelling = True # Perform a zerotelling
 Flagstockcorrecties = True # Perform stock correctie
 Flagdayremnants = True # Perform checks in case the colli from the delivery does not fit in the shelf 
 Flagorderprediction_pmf = False # Predict when to order new products based on probability mass function 
-Flagorderprediction_dir = False # Predict when to order new products based on dirichlet mass function
+Flagorderprediction_dir = True # Predict when to order new products based on dirichlet mass function
 
 
 
@@ -84,6 +71,14 @@ Flagorderprediction_dir = False # Predict when to order new products based on di
 
 
 for product_id in range(0, nr_products): #Loop over alll products
+
+    # Independent, reproducible random streams per product
+    np.random.seed(20 + product_id)
+
+    rng = np.random.default_rng(42 + product_id)
+    rng_exp = np.random.default_rng(12345 + product_id)
+
+    
     prod_init = ip.Initialize_prod(T, Shelf_length) 
     price = prod_init["price"]
     day_of_week = prod_init["day_of_week"]
@@ -137,15 +132,6 @@ for product_id in range(0, nr_products): #Loop over alll products
 
 
     
-    #Will likely change this! put in initialize_product later 
-    #prod_min = 10 #CHANGE!!!!!    
-    # min_exp_date = np.mean(sold)
-    
-    # min_exp_date = int(round(min_exp_date*Colli) * 1.5) #1.5 to make a more realistic minimum 
-    # #max(1, int(round(min_exp_date * Colli) * 1.5))
-    # max_exp_date = int(min_exp_date * 10) # times 10 to try and engulf as many items as possible
-    # Exp_date = np.random.randint(min_exp_date, max_exp_date)
-    
     
     Initial_pool = [Exp_date] * actual_stock[0]
     pools = [[]]
@@ -155,7 +141,8 @@ for product_id in range(0, nr_products): #Loop over alll products
     #initialize expired products
     expired_products = np.zeros(T, dtype=int)
 
-
+    #Initialize system shutdown
+    system_stopped = False
     
     # ====================================================================================================================                               
     #Loop over every timestep 
@@ -220,120 +207,155 @@ for product_id in range(0, nr_products): #Loop over alll products
         
 ################################################################################################################
         # ============================================================
-        # 1. Update prediction-based order countdown
+        # 0. System shutdown and reset
         # ============================================================
         
-        if not np.isnan(time_to_order):
-            # A new predicted order moment was found
-            days_till_order = int(time_to_order) - 1
-            first_order_day = True
-        
-        elif days_till_order is not None and days_till_order > 0:
-            # Count down toward predicted order day
-            days_till_order -= 1
-        
-        
-        # ============================================================
-        # 2. Initialize event flags for this timestep
-        # ============================================================
-        
-        delivery_arrived = False
-        order_placed = False
-        day_rest_check = False
-        
-        
-        # ============================================================
-        # 3. Check whether an already placed order arrives today
-        # ============================================================
-        
-        order_is_pending = not new_order
-        
-        if order_is_pending:
-            delivery_due_today = (Delivery_sceduled - days_after_order) == 0
-        
-            if delivery_due_today:
-                delivered_stock = max_delivery * Colli
-        
-                next_stock += delivered_stock
-                actual_next_stock += delivered_stock
-        
-                days_after_order = 0
-                new_order = True
-                delivery_arrived = True
-                day_rest_check = True
-        
-                delivery_amount[t] = delivered_stock
-        
-                # ----------------------------------------------------
-                # Simulate missing delivered collis
-                # ----------------------------------------------------
-                if Flag_col_del_mis:
-                    values = np.arange(0, max_delivery + 1)
-        
-                    # Exponentially decreasing probabilities
-                    probs = np.exp(-values)
-                    probs = probs / probs.sum()
-        
-                    Vault_coll = np.random.choice(values, p=probs)
-                else:
-                    Vault_coll = 0
-        
-                coll_stat[t] = Vault_coll
-        
-                # ----------------------------------------------------
-                # Simulate missing products within collis
-                # ----------------------------------------------------
-                p_Colli_vault_prod = fsg.Colli_vault_prod(Vault_coll, max_delivery)
-        
-                if Flag_col_del_prod_mis:
-                    Vault_coll_prod = np.random.choice(
-                        np.arange(0, max_delivery + 1),
-                        p=p_Colli_vault_prod
-                    )
-                else:
-                    Vault_coll_prod = 0
-        
-                stock_missing[t] = abs(coll_stat[t] * Colli - Vault_coll_prod)
-
-                #Add experation dates for deliveries
-                Added_actual_stock = delivered_stock - stock_missing[t]
-                #print("Added_actual_stock =", Added_actual_stock)
-                pools.append([Exp_date] * Added_actual_stock)
-                
-        # ============================================================
-        # 4. Decide whether to place a new order
-        #    Only possible if no delivery arrived this timestep
-        # ============================================================
-        
-        can_place_order = new_order and not delivery_arrived
-        
-        normal_order_needed = stock[t - 1] <= prod_min
-        predicted_order_needed = days_till_order == 0
-        
-        if can_place_order and (normal_order_needed or predicted_order_needed):
-            Delivery_sceduled = Delivery_time[t]
-            days_after_order = 1
-            new_order = False
-            order_placed = True
-        
-            # Reset prediction countdown if the order was prediction-triggered
-            if predicted_order_needed:
-                days_till_order = None
-                first_order_day = False
-        
-        elif order_is_pending and not delivery_arrived:
-            # Order is still on its way
-            days_after_order += 1
-        
-        
-        # ============================================================
-        # 5. Delivery_time is only non-zero when an order is placed
-        # ============================================================
-        
-        if not order_placed:
+        if t == 100 and Flag_shutdown == True:
+            system_stopped = True
             Delivery_time[t] = 0
-
+        
+            new_order = True
+            days_after_order = 0
+            Delivery_scheduled = 0
+        
+            days_till_order = None
+            Frist_order_day = False
             
+        elif t == 103 and Flag_shutdown == True:
+            system_stopped = False
+        
+            new_order = True
+            days_after_order = 0
+            Delivery_scheduled = 0
+        
+            days_till_order = None
+            Frist_order_day = False
+        
+                
+        if system_stopped:
+            delivery_arrived = False
+            order_placed = False
+            day_rest_check = False
+        
+            Delivery_time[t] = 0
+            delivery_amount[t] = 0
+        
+        else:
+            # ============================================================
+            # 1. Update prediction-based order countdown
+            # ============================================================
+            
+            if not np.isnan(time_to_order):
+                # A new predicted order moment was found
+                days_till_order = int(time_to_order) - 1
+                first_order_day = True
+            
+            elif days_till_order is not None and days_till_order > 0:
+                # Count down toward predicted order day
+                days_till_order -= 1
+            
+            
+            # ============================================================
+            # 2. Initialize event flags for this timestep
+            # ============================================================
+            
+            delivery_arrived = False
+            order_placed = False
+            day_rest_check = False
+            
+            
+            # ============================================================
+            # 3. Check whether an already placed order arrives today
+            # ============================================================
+            
+            order_is_pending = not new_order
+            
+            if order_is_pending:
+                delivery_due_today = (Delivery_scheduled - days_after_order) == 0
+            
+                if delivery_due_today:
+                    delivered_stock = max_delivery * Colli
+            
+                    next_stock += delivered_stock
+                    actual_next_stock += delivered_stock
+            
+                    days_after_order = 0
+                    new_order = True
+                    delivery_arrived = True
+                    day_rest_check = True
+            
+                    delivery_amount[t] = delivered_stock
+            
+                    # ----------------------------------------------------
+                    # Simulate missing delivered collis
+                    # ----------------------------------------------------
+                    if Flag_col_del_mis:
+                        values = np.arange(0, max_delivery + 1)
+            
+                        # Exponentially decreasing probabilities
+                        probs = np.exp(-values)
+                        probs = probs / probs.sum()
+            
+                        Vault_coll = np.random.choice(values, p=probs)
+                    else:
+                        Vault_coll = 0
+            
+                    coll_stat[t] = Vault_coll
+            
+                    # ----------------------------------------------------
+                    # Simulate missing products within collis
+                    # ----------------------------------------------------
+                    p_Colli_vault_prod = fsg.Colli_vault_prod(Vault_coll, max_delivery)
+            
+                    if Flag_col_del_prod_mis:
+                        Vault_coll_prod = np.random.choice(
+                            np.arange(0, max_delivery + 1),
+                            p=p_Colli_vault_prod
+                        )
+                    else:
+                        Vault_coll_prod = 0
+            
+                    stock_missing[t] = abs(coll_stat[t] * Colli - Vault_coll_prod)
+    
+                    #Add experation dates for deliveries
+                    Added_actual_stock = delivered_stock - stock_missing[t]
+                    #print("Added_actual_stock =", Added_actual_stock)
+                    pools.append([Exp_date] * Added_actual_stock)
+                    
+            # ============================================================
+            # 4. Decide whether to place a new order
+            #    Only possible if no delivery arrived this timestep
+            # ============================================================
+            
+            can_place_order = new_order and not delivery_arrived
+            
+            normal_order_needed = stock[t - 1] <= prod_min
+            predicted_order_needed = days_till_order == 0
+            
+            if can_place_order and (normal_order_needed or predicted_order_needed):
+                Delivery_scheduled = Delivery_time[t]
+                days_after_order = 1
+                new_order = False
+                order_placed = True
+            
+                # Reset prediction countdown if the order was prediction-triggered
+                if predicted_order_needed:
+                    days_till_order = None
+                    first_order_day = False
+            
+            elif order_is_pending and not delivery_arrived:
+                # Order is still on its way
+                days_after_order += 1
+            
+            
+            # ============================================================
+            # 5. Delivery_time is only non-zero when an order is placed
+            # ============================================================
+            
+            if not order_placed:
+                Delivery_time[t] = 0            
+
+                    
 ################################################################################################################################
 
         
@@ -356,7 +378,7 @@ for product_id in range(0, nr_products): #Loop over alll products
             double_scanned[t] = 0
 
 ################################################################################################################################
-        
+      
         # =======================================================================                               
         #Add randomized Extra delivery
         # =======================================================================
@@ -426,6 +448,7 @@ for product_id in range(0, nr_products): #Loop over alll products
                              
 
 
+                            
 
 ################################################################################################################################        
 
@@ -460,6 +483,8 @@ for product_id in range(0, nr_products): #Loop over alll products
         
         #print("sale_type =", sale_type[t])
         #print("sold =", sold)
+
+
         
 ################################################################################################################################                
         # ====================================================================================================================                               
@@ -585,10 +610,6 @@ for product_id in range(0, nr_products): #Loop over alll products
 
                 
                                         
-                
-            
-            
-
 
     
     # ====================================================================================================================                                  
@@ -597,7 +618,7 @@ for product_id in range(0, nr_products): #Loop over alll products
     
     df_product = pd.DataFrame({
         "Product": [product_id]*T,
-        "time": list(range(1, T+1)),
+        "time": list(range(1, T+1)), #Change at initialize! now you increment things by 1
         "theft": theft,
         "Price": [price]*T,
         "day_of_week": day_of_week,
@@ -658,9 +679,13 @@ for product_id in range(0, nr_products): #Loop over alll products
     })
     all_products.append(empty_row)
 
+
 # Combine dataset
+#df_no_pred_shutdown = pd.concat(all_products, ignore_index=True)
 #df_no_pred = pd.concat(all_products, ignore_index=True)
-df_dir = pd.concat(all_products, ignore_index=True)
+
+#df_dir = pd.concat(all_products, ignore_index=True)
+df_dir_shutdown = pd.concat(all_products, ignore_index=True)
 
 #Save data from first product 
 #one_product = df_no_pred[df_no_pred["Product"] == 0]
