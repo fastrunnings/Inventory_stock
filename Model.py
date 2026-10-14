@@ -1,11 +1,6 @@
 import Functions_stock_generation as fsg # Import stock generation functions
 import Initialize_product as ip # Call Variables from initialization
-
-
-from pmf_stock_pred import pmf_stock_predictions_up as pmf_up_script# Call functions from updated pmf prediction script
 from Dirichlet_stock_pred import Functions_dirichlet_pred as Dir_script# Call functions from dirichlet prediction script
-
-
 
 import pandas as pd
 import numpy as np
@@ -28,7 +23,7 @@ nr_products = 100 #At 100 (but take 1000 to be sure!) you should be fine with yo
 Idx_pred = int(np.round(T/2)) #Set Idx for stock prediction 
 
 
-#initialize variables for short and long timescales pmf updating 
+#initialize variables for short and long timescales pmf dirichlet updating 
 window = 28 #4 weeks, trend (note this can matter a lot)
 lag = 50 #time scale for rolling window base_pmf
 decay = 0.9 #decay used for updating the pmf
@@ -61,8 +56,7 @@ Flag_shutdown = True # add a shutdown within the timeseries
 Flagzerotelling = True # Perform a zerotelling
 Flagstockcorrecties = True # Perform stock correctie
 Flagdayremnants = True # Perform checks in case the colli from the delivery does not fit in the shelf 
-Flagorderprediction_pmf = False # Predict when to order new products based on probability mass function 
-Flagorderprediction_dir = True # Predict when to order new products based on dirichlet mass function
+Flagorderprediction_dir = False # Predict when to order new products based on dirichlet mass function
 
 
 
@@ -486,51 +480,7 @@ for product_id in range(0, nr_products): #Loop over alll products
 
 
         
-################################################################################################################################                
-        # ====================================================================================================================                               
-        #Stock prediction pmf    
-        # ====================================================================================================================                               
-        if Flagorderprediction_pmf == True:
-
-            manual_check_t = (
-                zero_t[t] == 1
-                or stock_cor[t] == 1
-                or day_rest_cor[t] == 1
-            )
-            
-            (base_prior_pmf, states, history,
-             draws, multi_draws, base_history,
-             pred_q10, pred_q50, pred_q90, time_to_order
-            ) = pmf_up_script.stock_prediction(
-                t,
-                Idx_pred,
-                stock,
-                sold,
-                delivery_amount,
-                rng,
-                pred_t,
-                avg_delivery_time,
-                window,
-                lag,
-                decay,
-                rho,
-                sigma,
-                base_prior_pmf,
-                states,
-                history,
-                draws,
-                multi_draws,
-                base_history,
-                pred_q10,
-                pred_q50,
-                pred_q90,
-                manual_check=manual_check_t,
-                reset_on_manual_check=True,
-                n_sims=1000, #number of simulations to run
-                horizon=500, #Set amount of draws
-                order_quantile="q50" #order based on which prediction
-            )
-        
+################################################################################################################################                        
 
 
         
@@ -583,7 +533,7 @@ for product_id in range(0, nr_products): #Loop over alll products
         # ====================================================================================================================                               
         #Compute uncertaintly for Stock prediction (pmf or Dirichlet)  
         # ====================================================================================================================                                
-        if Flagorderprediction_pmf == True or Flagorderprediction_dir == True:
+        if Flagorderprediction_dir == True:
             #Determine the predictions
             #print(manual_check_t)
             if t > Idx_pred:
