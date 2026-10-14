@@ -1,5 +1,5 @@
 # Inventory stock model with stock predictions
-This model creates syntethic inventory stock data for 2 years by generating random products with different characteristics. Within the analysis notebook the invertory stock is analysed for two different delivery prediction schemes, including a possible IT shutdown. Future analysis could be done on work activities, theft promotions etc...
+This model creates syntethic inventory stock data for 2 years by generating random products with different characteristics. Within the analysis notebook the invertory stock is analysed for two different delivery prediction schemes, including a possible IT shutdown. Future analysis could be done on work activities, theft, promotions etc...
 
 ## files:
   - Model_git.ipynb generates the data 
